@@ -1,0 +1,45 @@
+apiVersion: "nuclio.io/v1"
+kind: "Function"
+metadata:
+  name: yolo11-volleyball-detector
+  namespace: "nuclio"
+  annotations:
+    nuclio.io/description: "YOLOv11 based volleyball segmentation"
+    nuclio.io/readme: |
+      This function implements a YOLO segmentation model for detecting volleyballs.
+      It receives an image from CVAT, runs inference using an ONNX model,
+      and returns polygon annotations in the format expected by CVAT's semi-automatic annotation tools.
+
+spec:
+  runtime: "python:3.9"
+  handler: "main:handler"
+  
+  build:
+    commands:
+      - "pip install numpy"
+      - "pip install Pillow"
+      - "pip install onnxruntime"
+      - "pip install scikit-image"
+
+  triggers:
+    default-http:
+      maxWorkers: 1
+      kind: "http"
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        port: 8080
+
+  env:
+    - name: MODEL_PATH
+      value: "best.onnx"
+
+  platform:
+    attributes:
+      mount: "true"
+      resources:
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+        limits:
+          cpu: "2"
+          memory: "4Gi" 
